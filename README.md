@@ -1,7 +1,8 @@
-Tool 1: Network Reconnaissance Tool
+#Tool 1: Network Reconnaissance Tool
+
 Overview
 
-The Network Reconnaissance Tool is designed to assist red teamers in gathering detailed information about a target network. It performs various network scanning and enumeration techniques to identify live hosts, open ports, services, and potential vulnerabilities.
+##The Network Reconnaissance Tool is designed to assist red teamers in gathering detailed information about a target network. It performs various network scanning and enumeration techniques to identify live hosts, open ports, services, and potential vulnerabilities.
 Features
 
     IP Range Scanning: Quickly scan a range of IP addresses to identify live hosts.
@@ -14,7 +15,7 @@ Usage
 bash
 
 # Clone the repository
-git clone https://github.com/your-username/network-recon-tool.git
+git clone https://github.com/hak193/network-recon-tool
 cd network-recon-tool
 
 # Install dependencies
