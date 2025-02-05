@@ -1,67 +1,44 @@
-import scapy.all as scapy
 import argparse
-from tabulate import tabulate
+from utils import ip_range, scan_ports, detect_service_versions, check_vulnerabilities
 
-# Define the function to scar the IP range
-def scan_ip_range(ip_range):
-    # Send ARP requests to the IP range and get the responses
-    arp_request = scapy.ARP(pdst=ip_range)
-    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-    arp_request_broadcast = broadcast/arp_request
-    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ip-range", required=True)
+    args = parser.parse_args()
 
-    # Get the live hosts from the responses
+    ip_range_obj = ip_range(args.ip_range.split("/")[0], args.ip_range.split("/")[1])
     live_hosts = []
-    for element in answered_list:
-        live_hosts.append(element[1].psrc)
 
-    return live_hosts
+    # Perform ICMP ping sweep to find live hosts
+    for ip in ip_range_obj.hosts():
+        if is_live_host(ip):  # implement is_live_host function using scapy or nmap
+            live_hosts.append(ip)
 
-# Define the function to scan open ports on a host
-def scan_open_ports(host):
-    # Send SYN packets to common ports and get the responses
-    open_ports = []
-    ports = [22, 80, 443]
-    for port in ports:
-        packet = scapy.IP(dst=host)/scapy.TCP(dport=port, flags="S")
-        response = scapy.sr1(packet, timeout=1, verbose=False)
-        if response and response.haslayer(scapy.TCP) and response.getlayer(scapy.TCP).flags == 0x12:
-            open_ports.append(port)
+    print("Live hosts:")
+    for host in live_hosts:
+        print(host)
 
-    return open_ports
+        # Scan open ports on each live host
+        open_ports = scan_ports(host)
+        print("Open ports on {}: {}".format(host, open_ports))
 
-# Define the function to get service versions from open ports
-def get_service_versions(host, open_ports):
-    # Send requests to open ports and get service versions from headers or banners
-    service_versions = {}
-    for port in open_ports:
-        if port == 22:
-            # SSH service version extraction is complex and may require additional libraries or custom implementation.
-            # For simplicity, we'll assume it's OpenSSH.
-            service_versions[port] = "OpenSSH"
-        elif port == 80:
-            packet = scapy.IP(dst=host)/scapy.TCP(dport=port)/"GET / HTTP/1.1\r\nHost:\r\n\r\n"
-            response = scappy.sr1(packet, timeout=1, verbose=False)
-            if response and response.haslayer(scappy.HTTPResponse):
-                server_header = response.getlayer(scappy.HTTPResponse).getheader("Server")
-                if server_header:
-                    service_versions[port] = server_header.split()[0]
+        # Detect service versions on each open port
+        service_versions = detect_service_versions(host)
+        print("Service versions:")
+        for port in service_versions:
+            print("{} ({}): {}".format(port[0], port[1], port[2]))
 
-    return service_versions
-
-# Define the function to check potential vulnerabilities based on service versions.
-def check_vulnerabilities(service_versions):
-    vulnerabilities = []
-    
-     # Add known vulnerability checks here. 
-     # For example,
-     #   - Check OpenSSH version against known CVEs like CVE-2020-15778 (critical).
-     #   - Check Apache version against known CVEs like CVE-2019-0211 (high).
-    
-     # Example entries based on given example output code
-    
-     if '22' in list(service_versions.keys()) :
-         vulnerabilities.append({'cve': 'CVE-2020-15778', 'description': f"OpenSSH {service_versions['22']}" , 'severity': "Critical"})
-     
-     
-      # similar condition can be added here as per requirement 
+        # Check potential vulnerabilities on each service version detected 
+        vulnerabilities_detected=check_vulnerabilities(service_versions)
+        if len(vulnerabilities_detected)>0 :
+          print ("Potential vulnerabilites :")
+          i=0 
+          while i<len(vulnerabilities_detected) :
+            vuln_id=vulnerabilities_detected[i][0]
+            vuln_severity=vulnerabilities_detected[i][1]
+            vuln_desc=vulnerabilities_detected[i][2]            
+            i=i+1  
+            print("{} ({})".format(vuln_id,vuln_severity))
+        
+if __name__ == "__main__":
+    main()
