@@ -42,3 +42,22 @@ def main():
         
 if __name__ == "__main__":
     main()
+import requests
+
+def check_vulnerabilities(service_versions):
+    api_url = "https://services.nvd.disa.mil/rest/v1/cve/1.0"
+    headers = {"Content-Type": "application/json"}
+    params = {"apiKey": "35a5e144-5679-4838-9a50-e4fd6a38d2e2", "cpeName": service_versions}
+
+    response = requests.get(api_url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        vulnerabilities_detected = []
+        for result in data["result"]["vulnerabilities"]:
+            vulnerability_id = result["id"]
+            severity = result["severity"]
+            vulnerabilities_detected.append((vulnerability_id, severity))
+        return vulnerabilities_detected
+    else:
+        return None
