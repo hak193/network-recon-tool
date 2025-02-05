@@ -61,3 +61,32 @@ def check_vulnerabilities(service_versions):
         return vulnerabilities_detected
     else:
         return None
+import ipaddress
+
+def ip_range(ip_range_str):
+    """
+    Calculate the IP range from a given string.
+
+    Args:
+        ip_range_str (str): The IP range string in CIDR notation (e.g., 192.168.1.0/24)
+
+    Returns:
+        list: A list of IP addresses in the given range
+    """
+    network = ipaddress.ip_network(ip_range_str, strict=False)
+    return [str(ip) for ip in network]
+
+def main():
+    # Example usage
+    ip_range_str = "192.168.1.0/24"
+    ips = ip_range(ip_range_str)
+    
+    print(f"Scanning IP range: {ip_range_str}")
+    
+    # Print live hosts (for demonstration purposes, assume all IPs are live)
+    print("Live hosts:")
+    for ip in ips:
+        print(ip)
+
+if __name__ == "__main__":
+    main()
